@@ -14,11 +14,10 @@ import cv2
 import matplotlib.pyplot as plt
 from tkinter import Tk
 from tkinter import *
-from RobotClass import Robot
-from ContourProcessor import ContourProcessor
-from Velocity import Velocity
-
-from FPSCounter import FPSCounter
+from Tracking.RobotClass import Robot
+from Tracking.ContourProcessor import ContourProcessor
+from Tracking.Velocity import Velocity
+from Tracking.FPSCounter import FPSCounter
 
 
 #import EasyPySpin
@@ -131,6 +130,11 @@ class Tracker:
             self.robot_list[-1].add_trajectory(bot_loc)
             self.num_bots += 1
 
+            ####NEW
+            target = [x, y]
+            # create trajectory
+            self.robot_list[-1].add_trajectory(target)
+            self.draw_trajectory = True  # Target Position
         
 
         # Right mouse click event; allows you to draw the trajectory of the
@@ -150,7 +154,7 @@ class Tracker:
                 self.robot_list[-1].add_trajectory(target)
 
         # When right click is released, stop drawing trajectory
-        elif event == cv2.EVENT_RBUTTONUP:
+        elif event == cv2.EVENT_LBUTTONUP:
             self.draw_trajectory = False
 
         # Middle mouse; CLEAR EVERYTHING AND RESTART ANALYSIS
@@ -243,6 +247,7 @@ class Tracker:
         bot.add_blur(blur)
         bot.add_frame(self.frame_num)
         bot.add_time(round(time.time()-self.start,2))
+        
         
 
     def detect_robot(self, frame: np.ndarray, fps: FPSCounter, pix_2metric: float):
@@ -375,28 +380,28 @@ class Tracker:
 
                 # display dragon tails
                 pts = np.array(self.robot_list[bot_id].position_list, np.int32)
-                #cv2.polylines(frame, [pts], False, bot_color, 2)
+                cv2.polylines(frame, [pts], False, bot_color, 2)
                 
 
                 #display target positions
                 targets = self.robot_list[bot_id].trajectory
                 if len(targets) > 0:
                     pts = np.array(self.robot_list[bot_id].trajectory, np.int32)
-                    #cv2.polylines(frame, [pts], False, (1, 1, 255), 2)
+                    cv2.polylines(frame, [pts], False, (1, 255, 1), 2)
 
 
                     tar = targets[-1]
-                    #cv2.circle(frame,(int(tar[0]), int(tar[1])),4,(bot_color),-1,)
+                    cv2.circle(frame,(int(tar[0]), int(tar[1])),4,(bot_color),-1,)
 
                 
                 blur = round(self.robot_list[bot_id].blur_list[-1],2) if len(self.robot_list[bot_id].blur_list) > 0 else 0
                 dia = round(np.sqrt(4*self.robot_list[bot_id].avg_area/np.pi),1)
                 text = "robot {}: {} um | {} blur".format(bot_id+1,dia,blur)
                 
-                #cv2.putText(frame, "robot {}".format(bot_id+1), (x, y-10), 
-                            #cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 1)
-                #cv2.putText(frame, "~ {}um".format(dia), (x, y+h+20), 
-                            #cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
+                cv2.putText(frame, "robot {}".format(bot_id+1), (x, y-10), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,0,0), 1)
+                cv2.putText(frame, "~ {}um".format(dia), (x, y+h+20), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
                             
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
                 
@@ -409,11 +414,11 @@ class Tracker:
                     vmag = [v.mag for v in self.robot_list[bot_id].velocity_list[-10:]]
                     vmag_avg = round(sum(vmag) / len(vmag),2)
                     
-                    #cv2.putText(frame, f'{vmag_avg:.1f} um/s', (x, y +h + 40), 
-                    #        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
+                    cv2.putText(frame, f'{vmag_avg:.1f} um/s', (x, y +h + 40), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 1)
                     
                     text = "robot {}: {} um | {} um/s | {} blur".format(bot_id+1,dia,vmag_avg,blur)
-                #cv2.putText(frame,text,(0, 170 + bot_id * 20),cv2.FONT_HERSHEY_COMPLEX,0.5,bot_color,1,)
+                cv2.putText(frame,text,(0, 170 + bot_id * 20),cv2.FONT_HERSHEY_COMPLEX,0.5,bot_color,1,)
                 
                 
 
@@ -499,9 +504,6 @@ class Tracker:
                 # DETECT ROBOTS AND UPDATE TRAJECTORY
                 self.detect_robot(frame, fps_counter,self.pix_2metric)
 
-                # APPLY SELECTED CONTROL ALGORITHM
-              
-                #print(self.robot_list[-1].tracks)
 
               
             # UPDATE AND DISPLAY HUD ELEMENTS
@@ -509,7 +511,7 @@ class Tracker:
             
             # add videos a seperate list to save space and write the video afterwords
             if self.status_params["record_status"]:
-                output_name = output_name + str(int(time.time()-start))
+                output_name = "Data/"+ output_name
                 if rec_start_time is None:
                     rec_start_time = time.time()
 
@@ -525,8 +527,8 @@ class Tracker:
                     
 
                 
-                #cv2.putText(frame,"time (s): " + str(np.round(time.time() - rec_start_time, 2)),(int((self.width * resize_scale / 100) * (7 / 10)),
-                #        int((self.height * resize_scale / 100) * (9.9 / 10)),),cv2.FONT_HERSHEY_COMPLEX,0.5,(255, 255, 255),1)
+                cv2.putText(frame,"time (s): " + str(np.round(time.time() - rec_start_time, 2)),(int((self.width * resize_scale / 100) * (7 / 10)),
+                        int((self.height * resize_scale / 100) * (9.9 / 10)),),cv2.FONT_HERSHEY_COMPLEX,0.5,(255, 255, 255),1)
                 result.write(frame)
 
             elif result is not None and not self.status_params["record_status"]:
@@ -562,57 +564,4 @@ class Tracker:
 
         return self.robot_list
             
-      
 
-CONTROL_PARAMS = {
-    "lower_thresh": np.array([0,0,0]),  #HSV
-    "upper_thresh": np.array([180,255,130]),  #HSV   #130/150 -->black on upper value
-    "blur_thresh": 100,
-    "initial_crop": 100,       #intial size of "screenshot" cropped frame 
-    "tracking_frame": 3,            #cropped frame dimensions mulitplier
-    "avg_bot_size": 5,
-    "field_strength": 1,
-    "rolling_frequency": 10,
-    "arrival_thresh": 10,
-    "gamma": 90,
-    "memory": 15,
-}
-
-CAMERA_PARAMS = {
-    "resize_scale": 100, 
-    "framerate": 1, 
-    "exposure": 6000,   #6000
-    "Obj": 50}
-
-STATUS_PARAMS = {
-    "rolling_status": 0,
-    "orient_status": 0,
-    "multi_agent_status": 0,
-    "PID_status": 0,
-    "algorithm_status": False,
-    "record_status": True,
-}
-
-ACOUSTIC_PARAMS = {
-    "acoustic_freq": 0,
-    "acoustic_amplitude": 0
-}
-
-MAGNETIC_FIELD_PARAMS = {
-    "PositiveY": 0,
-    "PositiveX": 0,
-    "NegativeY": 0,
-    "NegativeX": 0,
-}
-if __name__ == "__main__":
-    
-    tracker = Tracker(CONTROL_PARAMS,CAMERA_PARAMS,STATUS_PARAMS)
-        #self.tracker = tracker
-
-    video_name = "/Users/bizzarohd/Desktop/Vid_7.mp4"
-
-    output_name = "/Users/bizzarohd/Desktop/Vid_7_Annotated.mp4"
-    
-    
-
-    tracker.main(video_name,output_name)

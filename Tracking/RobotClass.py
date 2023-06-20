@@ -9,7 +9,7 @@ Module containing the Robot class
 
 from typing import List, Tuple, Union
 import numpy as np
-from Velocity import Velocity
+from Tracking.Velocity import Velocity
 
 
 

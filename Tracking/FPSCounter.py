@@ -8,8 +8,6 @@ Module containing the FPSCounter class
 """
 
 import time
-
-
 class FPSCounter:
     """
     Class for managing the FPS of the microbot tracker

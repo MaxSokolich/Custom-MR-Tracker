@@ -32,7 +32,7 @@ class ContourProcessor:
         self.kernel_size = 3
         self.base_brightness = 0
         self.control_params = control_params
-        self.baseline_blur = 0#self.calculate_blur(cv2.imread(baseline_blur_img), True)
+        self.baseline_blur = 0
         self.counter = 0
         if use_cuda and cv2.cuda.getCudaEnabledDeviceCount() > 0:
             self.use_cuda = True

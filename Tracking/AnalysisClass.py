@@ -45,7 +45,7 @@ class Analysis:
             for bot in tqdm(self.robot_list):
                 if len(bot.area_list) > 1:
                     pickles.append(bot.as_dict())
-            filename = "src/data/"+filename
+            filename = "Data/"+filename
             print(" -- writing pickle --")
             with open(filename + ".pickle", "wb") as handle:
                 pickle.dump(pickles, handle, protocol=pickle.HIGHEST_PROTOCOL)
